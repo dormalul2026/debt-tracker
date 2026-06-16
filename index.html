@@ -445,9 +445,9 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-si
   <div class="grid2">
     <div class="panel">
       <div class="ph"><i class="ti ti-piggy-bank"></i>Monthly savings log</div>
-      <div class="psub">$1,000 per month — synced with payment schedule</div>
+      <div class="psub">$1,000 per month — סמן כל חודש שהפרשת</div>
       <table>
-        <thead><tr><th style="text-align:left">Month</th><th style="text-align:right">Contribution</th><th style="text-align:right">Running total</th></tr></thead>
+        <thead><tr><th style="text-align:left">Month</th><th style="text-align:center">✓</th><th style="text-align:right">Contribution</th><th style="text-align:right">Running total</th></tr></thead>
         <tbody id="savBody"></tbody>
       </table>
     </div>
@@ -541,16 +541,25 @@ function updateUI(state) {
   updateSavings(state);
 }
 
+function toggleSav(m) {
+  getState(function(state) {
+    state['s'+m] = !state['s'+m];
+    saveState(state);
+    updateSavings(state);
+  });
+}
+
 function updateSavings(state) {
   var total = 0; var savDone = 0; var html = '';
   for(var i=0;i<24;i++) {
     var m = i+1;
-    var isDone = !!state[m];
+    var isDone = !!state['s'+m];
     if(isDone){ total += 1000; savDone++; }
     var rowStyle = isDone ? 'background:var(--grnBg);' : '';
-    var amtColor = isDone ? 'color:var(--grn);' : 'color:var(--soft);';
+    var amtColor = isDone ? 'color:var(--grn);font-weight:700;' : 'color:var(--soft);';
     html += '<tr style="'+rowStyle+'">';
     html += '<td style="font-weight:600;font-size:12.5px;">'+(i+1)+'. '+SAV_MONTHS[i]+'</td>';
+    html += '<td style="text-align:center;"><input type="checkbox" class="sav-box"'+(isDone?' checked':'')+" onchange=\"toggleSav("+m+")\"style=\"cursor:pointer;width:16px;height:16px;accent-color:var(--grn);\"></td>";
     html += '<td style="font-family:\'IBM Plex Mono\',monospace;text-align:right;'+amtColor+'">'+(isDone?'$1,000':'—')+'</td>';
     html += '<td style="font-family:\'IBM Plex Mono\',monospace;font-weight:700;text-align:right;">'+(isDone?'$'+total.toLocaleString():'—')+'</td>';
     html += '</tr>';
