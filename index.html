@@ -436,24 +436,31 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-si
 </div>
 
 <div class="pane" id="pane-invest">
-  <p style="font-size:13px;color:var(--soft);margin-bottom:20px;">You are saving $1,000 every month during the debt plan — that is $24,000 by June 2028. After debt-free, redirect $3,104/month into investments. Adjust the model below.</p>
-  <div class="panel">
-    <div class="inv-grid">
-      <div>
-        <label>Starting balance at debt-free (24 x $1,000)</label>
-        <input type="number" id="principal" value="24000" step="500">
-        <label>Monthly investment after debt-free</label>
-        <input type="number" id="monthly" value="3104" step="50">
-        <label>Annual return rate <span class="rv" id="rateVal">7%</span></label>
-        <input type="range" id="rate" min="2" max="12" value="7" step="0.5">
-        <div class="inv-note">7% is a conservative planning rate. Historical S&P 500 average (VTI / VOO) is closer to 10% but 7% accounts for inflation and variance. Recommended vehicle: Roth IRA for tax-free growth. This is a planning estimate, not a guarantee.</div>
-      </div>
-      <div>
-        <table class="inv-table">
-          <thead><tr><th>Horizon</th><th>Contributed</th><th>Projected value</th><th>Growth</th></tr></thead>
-          <tbody id="invBody"></tbody>
-        </table>
-      </div>
+  <div class="kpis" style="margin-bottom:16px;">
+    <div class="kpi grn"><div class="n" id="savTotal">$0</div><div class="l">Saved so far</div></div>
+    <div class="kpi"><div class="n" id="savMonths">0 / 24</div><div class="l">Months contributed</div></div>
+    <div class="kpi gold"><div class="n">$24,000</div><div class="l">Target at Jun 2028</div></div>
+  </div>
+  <div class="pb" style="height:12px;margin-bottom:24px;"><div class="pf" id="savPf"></div></div>
+  <div class="grid2">
+    <div class="panel">
+      <div class="ph"><i class="ti ti-piggy-bank"></i>Monthly savings log</div>
+      <div class="psub">$1,000 per month — synced with payment schedule</div>
+      <table>
+        <thead><tr><th style="text-align:left">Month</th><th style="text-align:right">Contribution</th><th style="text-align:right">Running total</th></tr></thead>
+        <tbody id="savBody"></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="ph"><i class="ti ti-trending-up"></i>After debt-free projection</div>
+      <div class="psub">$24,000 starting balance + $3,104/month</div>
+      <label style="display:block;font-size:12px;color:var(--soft);margin:12px 0 4px;">Annual return rate <span class="rv" id="rateVal">7%</span></label>
+      <input type="range" id="rate" min="2" max="12" value="7" step="0.5" style="width:100%;accent-color:var(--gold);margin-bottom:16px;">
+      <table class="inv-table">
+        <thead><tr><th style="text-align:left">Horizon</th><th>Contributed</th><th>Projected</th><th>Growth</th></tr></thead>
+        <tbody id="invBody"></tbody>
+      </table>
+      <div class="inv-note" style="margin-top:12px;">7% = conservative estimate. S&P 500 historical avg ~10%. Recommended: Roth IRA for tax-free growth.</div>
     </div>
   </div>
 </div>
@@ -514,6 +521,8 @@ function saveState(s) {
   try { localStorage.setItem('dor-v4', JSON.stringify(s)); } catch(e) {}
 }
 
+var SAV_MONTHS = ['Jul 2026','Aug 2026','Sep 2026','Oct 2026','Nov 2026','Dec 2026','Jan 2027','Feb 2027','Mar 2027','Apr 2027','May 2027','Jun 2027','Jul 2027','Aug 2027','Sep 2027','Oct 2027','Nov 2027','Dec 2027','Jan 2028','Feb 2028','Mar 2028','Apr 2028','May 2028','Jun 2028'];
+
 function updateUI(state) {
   var done = Object.keys(state).filter(function(k){ return state[k]; }).length;
   document.getElementById('pf').style.width = (done/TOTAL*100)+'%';
@@ -529,6 +538,27 @@ function updateUI(state) {
     var cb = tr.querySelector('.paid-box');
     if(cb) cb.checked = isDone;
   });
+  updateSavings(state);
+}
+
+function updateSavings(state) {
+  var total = 0; var savDone = 0; var html = '';
+  for(var i=0;i<24;i++) {
+    var m = i+1;
+    var isDone = !!state[m];
+    if(isDone){ total += 1000; savDone++; }
+    var rowStyle = isDone ? 'background:var(--grnBg);' : '';
+    var amtColor = isDone ? 'color:var(--grn);' : 'color:var(--soft);';
+    html += '<tr style="'+rowStyle+'">';
+    html += '<td style="font-weight:600;font-size:12.5px;">'+(i+1)+'. '+SAV_MONTHS[i]+'</td>';
+    html += '<td style="font-family:\'IBM Plex Mono\',monospace;text-align:right;'+amtColor+'">'+(isDone?'$1,000':'—')+'</td>';
+    html += '<td style="font-family:\'IBM Plex Mono\',monospace;font-weight:700;text-align:right;">'+(isDone?'$'+total.toLocaleString():'—')+'</td>';
+    html += '</tr>';
+  }
+  document.getElementById('savBody').innerHTML = html;
+  document.getElementById('savTotal').textContent = '$'+total.toLocaleString();
+  document.getElementById('savMonths').textContent = savDone+' / 24';
+  document.getElementById('savPf').style.width = (total/24000*100)+'%';
 }
 
 function calcWindfall() {
@@ -558,8 +588,8 @@ function calcWindfall() {
 }
 
 function calcInvest() {
-  var P = parseFloat(document.getElementById('principal').value)||0;
-  var PMT = parseFloat(document.getElementById('monthly').value)||0;
+  var P = 24000;
+  var PMT = 3104;
   var r = parseFloat(document.getElementById('rate').value)/100;
   document.getElementById('rateVal').textContent = document.getElementById('rate').value+'%';
   var horizons = [1,3,5,10,20,30];
@@ -591,9 +621,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   });
-  ['principal','monthly','rate'].forEach(function(id) {
-    document.getElementById(id).addEventListener('input', calcInvest);
-  });
+  document.getElementById('rate').addEventListener('input', calcInvest);
   calcInvest();
 });
 </script>
