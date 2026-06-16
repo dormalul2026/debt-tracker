@@ -442,107 +442,13 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-si
     <div class="kpi gold"><div class="n">$24,000</div><div class="l">Target at Jun 2028</div></div>
   </div>
   <div class="pb" style="height:12px;margin-bottom:24px;"><div class="pf" id="savPf"></div></div>
-  <div class="grid2">
-    <div class="panel">
-      <div class="ph"><i class="ti ti-piggy-bank"></i>Monthly savings log</div>
-      <div class="psub">$1,000 per month — סמן כל חודש שהפרשת</div>
-      <table>
-        <thead><tr><th style="text-align:left">Month</th><th style="text-align:center">✓</th><th style="text-align:right">Contribution</th><th style="text-align:right">Running total</th></tr></thead>
-        <tbody id="savBody"></tbody>
-      </table>
-    </div>
-    <div class="panel">
-      <div class="ph"><i class="ti ti-trending-up"></i>After debt-free projection</div>
-      <div class="psub">$24,000 starting balance + $3,104/month</div>
-      <label style="display:block;font-size:12px;color:var(--soft);margin:12px 0 4px;">Annual return rate <span class="rv" id="rateVal">7%</span></label>
-      <input type="range" id="rate" min="2" max="12" value="7" step="0.5" style="width:100%;accent-color:var(--gold);margin-bottom:16px;">
-      <table class="inv-table">
-        <thead><tr><th style="text-align:left">Horizon</th><th>Contributed</th><th>Projected</th><th>Growth</th></tr></thead>
-        <tbody id="invBody"></tbody>
-      </table>
-      <div class="inv-note" style="margin-top:12px;">7% = conservative estimate. S&P 500 historical avg ~10%. Recommended: Roth IRA for tax-free growth.</div>
-    </div>
-  </div>
-
-  <!-- Investment strategy panel -->
-  <div class="panel" style="margin-top:20px;">
-    <div class="ph"><i class="ti ti-map-pin"></i>Where to put the money — investment roadmap</div>
-    <div class="psub">שתי פאזות: עכשיו עד יוני 2028, ואז אחרי חופש מחוב</div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
-
-      <!-- Phase 1 -->
-      <div style="border:2px solid var(--gold);border-radius:var(--r);padding:16px;background:var(--bg2);">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <span style="background:var(--gold);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.05em;">PHASE 1 — עכשיו</span>
-          <span style="font-size:11px;color:var(--soft);">Jul 2026 – Jun 2028</span>
-        </div>
-        <div style="font-size:14px;font-weight:700;margin-bottom:6px;">HYSA — High Yield Savings</div>
-        <div style="font-size:12px;color:var(--soft);margin-bottom:14px;">לא מושקע בשוק ההון כרגע — הכרטיסים עולים 22–30% APR, שום השקעה לא מכה את זה. הכסף יושב ומרוויח ריבית עד שהחוב נגמר.</div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <div style="display:flex;justify-content:space-between;font-size:12px;border-bottom:1px solid var(--rule);padding-bottom:6px;">
-            <span style="font-weight:600;">APY נוכחי (HYSA)</span>
-            <span style="font-family:'IBM Plex Mono',monospace;color:var(--grn);font-weight:700;">~4.5%</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;border-bottom:1px solid var(--rule);padding-bottom:6px;">
-            <span style="font-weight:600;">רווח צפוי על $24k</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-weight:700;">~$1,620</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;border-bottom:1px solid var(--rule);padding-bottom:6px;">
-            <span style="font-weight:600;">סה"כ ביוני 2028</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-weight:700;">~$25,620</span>
-          </div>
-        </div>
-        <div style="margin-top:12px;font-size:11px;color:var(--soft);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">חשבונות מומלצים</div>
-        <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;">
-          <div style="display:flex;justify-content:space-between;"><span>Marcus by Goldman Sachs</span><span style="color:var(--grn);font-family:'IBM Plex Mono',monospace;">4.50%</span></div>
-          <div style="display:flex;justify-content:space-between;"><span>SoFi Checking + Savings</span><span style="color:var(--grn);font-family:'IBM Plex Mono',monospace;">4.50%</span></div>
-          <div style="display:flex;justify-content:space-between;"><span>Ally Bank Online Savings</span><span style="color:var(--grn);font-family:'IBM Plex Mono',monospace;">4.20%</span></div>
-          <div style="display:flex;justify-content:space-between;"><span>Wealthfront Cash Account</span><span style="color:var(--grn);font-family:'IBM Plex Mono',monospace;">5.00%</span></div>
-        </div>
-      </div>
-
-      <!-- Phase 2 -->
-      <div style="border:1px solid var(--rule);border-radius:var(--r);padding:16px;background:var(--bg2);opacity:0.85;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <span style="background:var(--grn);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.05em;">PHASE 2 — אחרי יוני 2028</span>
-          <span style="font-size:11px;color:var(--soft);">$4,104/mo פנוי</span>
-        </div>
-        <div style="font-size:14px;font-weight:700;margin-bottom:6px;">Market investing — סדר עדיפויות</div>
-        <div style="font-size:12px;color:var(--soft);margin-bottom:14px;">$3,104 שהיה הולך לחוב + $1,000 חיסכון = $4,104 לחודש לבנות עושר.</div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <div style="border-bottom:1px solid var(--rule);padding-bottom:8px;">
-            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
-              <span style="font-weight:700;">① Roth IRA — ראשון</span>
-              <span style="font-family:'IBM Plex Mono',monospace;color:var(--gold);font-weight:700;">$583/mo</span>
-            </div>
-            <div style="font-size:11px;color:var(--soft);">מקסימום $7,000/שנה. רווחים פטורים ממס לנצח. Fidelity או Vanguard.</div>
-          </div>
-          <div style="border-bottom:1px solid var(--rule);padding-bottom:8px;">
-            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
-              <span style="font-weight:700;">② 401(k) match</span>
-              <span style="font-family:'IBM Plex Mono',monospace;color:var(--gold);font-weight:700;">כסף חינם</span>
-            </div>
-            <div style="font-size:11px;color:var(--soft);">אם המעסיק מציע matching — להגיע לפחות לאותו סכום. תשואה של 100% מיידי.</div>
-          </div>
-          <div style="padding-bottom:4px;">
-            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
-              <span style="font-weight:700;">③ Taxable brokerage — השאר</span>
-              <span style="font-family:'IBM Plex Mono',monospace;font-weight:700;">~$3,521/mo</span>
-            </div>
-            <div style="font-size:11px;color:var(--soft);">Fidelity / Schwab / Vanguard.</div>
-          </div>
-        </div>
-        <div style="margin-top:12px;font-size:11px;color:var(--soft);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">הקצאה מומלצת (פשוטה)</div>
-        <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;">
-          <div style="display:flex;justify-content:space-between;"><span>VTI — US Total Market</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:700;">60%</span></div>
-          <div style="display:flex;justify-content:space-between;"><span>VXUS — International</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:700;">25%</span></div>
-          <div style="display:flex;justify-content:space-between;"><span>BND — US Bond market</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:700;">15%</span></div>
-          <div style="margin-top:4px;font-size:11px;color:var(--soft);">או פשוט: VT (100% — גלובלי all-in-one)</div>
-        </div>
-      </div>
-
-    </div>
+  <div class="panel">
+    <div class="ph"><i class="ti ti-piggy-bank"></i>Monthly savings log</div>
+    <div class="psub">$1,000 per month — סמן כל חודש שהפרשת</div>
+    <table>
+      <thead><tr><th style="text-align:left">Month</th><th style="text-align:center">✓</th><th style="text-align:right">Contribution</th><th style="text-align:right">Running total</th></tr></thead>
+      <tbody id="savBody"></tbody>
+    </table>
   </div>
 
 </div>
@@ -678,28 +584,6 @@ function calcWindfall() {
   document.getElementById('wfResult').textContent = msg;
 }
 
-function calcInvest() {
-  var P = 24000;
-  var PMT = 3104;
-  var r = parseFloat(document.getElementById('rate').value)/100;
-  document.getElementById('rateVal').textContent = document.getElementById('rate').value+'%';
-  var horizons = [1,3,5,10,20,30];
-  var html = '';
-  horizons.forEach(function(y) {
-    var n = y*12, mr = r/12;
-    var fv = P*Math.pow(1+mr,n);
-    if(mr>0) fv += PMT*((Math.pow(1+mr,n)-1)/mr);
-    else fv += PMT*n;
-    var contrib = P + PMT*n;
-    var growth = fv - contrib;
-    html += '<tr><td>'+y+' year'+(y>1?'s':'')+'</td>';
-    html += '<td class="ico">$'+Math.round(contrib).toLocaleString()+'</td>';
-    html += '<td class="iamt">$'+Math.round(fv).toLocaleString()+'</td>';
-    html += '<td class="iamt" style="color:var(--grn)">+$'+Math.round(growth).toLocaleString()+'</td></tr>';
-  });
-  document.getElementById('invBody').innerHTML = html;
-}
-
 document.addEventListener('DOMContentLoaded', function() {
   getState(function(state) {
     updateUI(state);
@@ -712,8 +596,6 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   });
-  document.getElementById('rate').addEventListener('input', calcInvest);
-  calcInvest();
 });
 </script>
 </body>
