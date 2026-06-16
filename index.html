@@ -7,6 +7,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
 <style>
+#gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;}
+#gate-box{background:var(--bg2);border:1px solid var(--rule);border-radius:var(--r);padding:40px 36px;text-align:center;min-width:280px;}
+#gate-box h2{font-family:'Fraunces',serif;font-weight:900;font-size:26px;margin-bottom:6px;}
+#gate-box p{font-size:13px;color:var(--soft);margin-bottom:24px;}
+#gate-input{font-family:'IBM Plex Mono',monospace;font-size:22px;letter-spacing:.3em;text-align:center;width:140px;padding:10px;border:1px solid var(--rule);border-radius:8px;background:#fff;outline:none;}
+#gate-input:focus{border-color:var(--gold);}
+#gate-err{font-size:12px;color:var(--red);margin-top:10px;height:16px;}
 :root{--bg:#F7F2E8;--bg2:#FBF8F2;--ink:#22293A;--soft:#5B6275;--rule:#E1D8C6;--rules:#ECE5D6;--gold:#BD8B2E;--goldD:#8C6A22;--goldBg:#F7ECD3;--red:#A8503E;--redBg:#F7E4DE;--grn:#5C7F63;--grnBg:#E4EFE3;--blu:#3E5C76;--bluBg:#E5ECF2;--r:10px;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5;}
@@ -111,6 +118,14 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-si
 
 </head>
 <body>
+<div id="gate">
+  <div id="gate-box">
+    <h2>Debt Tracker</h2>
+    <p>Enter your code to continue</p>
+    <input id="gate-input" type="password" maxlength="4" inputmode="numeric" autofocus>
+    <div id="gate-err"></div>
+  </div>
+</div>
 <div class="page">
 <header class="hero">
   <div class="eyebrow"><i class="ti ti-route"></i> Debt freedom tracker &nbsp;·&nbsp; July 2026</div>
@@ -434,6 +449,18 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-si
 </footer>
 </div>
 <script>
+(function(){
+  var gate=document.getElementById('gate');
+  var inp=document.getElementById('gate-input');
+  var err=document.getElementById('gate-err');
+  if(sessionStorage.getItem('dor-auth')==='ok'){gate.style.display='none';return;}
+  inp.addEventListener('input',function(){
+    if(inp.value.length===4){
+      if(inp.value==='2018'){sessionStorage.setItem('dor-auth','ok');gate.style.display='none';}
+      else{err.textContent='Wrong code. Try again.';inp.value='';}
+    }
+  });
+})();
 var BALANCES = {"Jul 2026": 55690.42, "Aug 2026": 53649.17, "Sep 2026": 51576.87, "Oct 2026": 49472.79, "Nov 2026": 47336.17, "Dec 2026": 45166.25, "Jan 2027": 42962.23, "Feb 2027": 40724.46, "Mar 2027": 38453.31, "Apr 2027": 36131.77, "May 2027": 33758.72, "Jun 2027": 31333.11, "Jul 2027": 28857.65, "Aug 2027": 26331.34, "Sep 2027": 23753.12, "Oct 2027": 21121.95, "Nov 2027": 18437.26, "Dec 2027": 15697.97, "Jan 2028": 12902.95, "Feb 2028": 10051.08, "Mar 2028": 7141.2, "Apr 2028": 4172.13, "May 2028": 1146.2, "Jun 2028": 0};
 var PERIODS = Object.keys(BALANCES);
 var TOTAL = 24;
