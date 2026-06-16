@@ -114,6 +114,18 @@ table tr:last-child td{border-bottom:none;}
 .ri{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--goldD);background:var(--goldBg);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .rc p{font-size:13px;line-height:1.55;}
 footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-size:12px;color:var(--soft);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.v5card{background:var(--bg2);border:1px solid var(--rule);border-radius:var(--r);padding:18px 22px;margin-bottom:20px;}
+.v5head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;}
+.v5head .label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--goldD);font-weight:600;}
+.soho-tog{display:flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden;}
+.soho-tog button{padding:6px 14px;font-size:12px;font-weight:600;border:none;background:transparent;color:var(--soft);cursor:pointer;transition:all .15s;}
+.soho-tog button.on{background:var(--goldD);color:#fff;}
+.v5grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+.v5row{display:flex;flex-direction:column;gap:2px;}
+.v5row .vl{font-size:11px;color:var(--soft);}
+.v5row .vv{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;}
+.v5row.hl .vv{color:var(--grn);font-size:17px;}
+.v5row.red .vv{color:var(--red);}
 </style>
 
 </head>
@@ -141,6 +153,23 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-si
   <div class="pl"><span id="pt">0 / 24 months complete</span><span>Target: Jun 2028</span></div>
 </header>
 
+<div class="v5card">
+  <div class="v5head">
+    <span class="label">Current plan — v5</span>
+    <div class="soho-tog">
+      <button class="on" id="btnSohoOn" onclick="setSoho(false)">Soho active</button>
+      <button id="btnSohoOff" onclick="setSoho(true)">Soho canceled Sep+</button>
+    </div>
+  </div>
+  <div class="v5grid">
+    <div class="v5row"><span class="vl">Net income</span><span class="vv">$9,168</span></div>
+    <div class="v5row red"><span class="vl">Rent</span><span class="vv">$2,850</span></div>
+    <div class="v5row"><span class="vl">Fixed expenses</span><span class="vv" id="v5fixed">$869.91</span></div>
+    <div class="v5row"><span class="vl">Variable living cap</span><span class="vv">$1,300</span></div>
+    <div class="v5row"><span class="vl">Monthly savings</span><span class="vv">$1,000</span></div>
+    <div class="v5row hl"><span class="vl">Debt payment</span><span class="vv" id="v5debt">$3,104.09</span></div>
+  </div>
+</div>
 <div class="windfall">
   <div style="flex:1;min-width:200px;">
     <p><strong style="color:var(--goldD)">Got extra cash?</strong> Enter a lump sum to instantly see how many months earlier you can be debt-free.</p>
@@ -432,8 +461,8 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-si
 <div class="pane" id="pane-rules">
   <div class="rules">
     <div class="rc"><span class="ri">1</span><p>Autopay the minimum on all 7 cards every month without exception.</p></div>
-    <div class="rc"><span class="ri">2</span><p>Request a Product Change on Chase 6019 before Feb 2027 to eliminate the $795 annual fee.</p></div>
-    <div class="rc"><span class="ri">3</span><p>No spending on AmEx or any card with a balance. Debit only until each card is fully cleared.</p></div>
+    <div class="rc"><span class="ri">2</span><p>Keep Chase 6019 open — do not close, downgrade, or product-change it.</p></div>
+    <div class="rc"><span class="ri">3</span><p>Do not use AmEx until fully paid off. Debit only until the balance is exactly $0.</p></div>
     <div class="rc"><span class="ri">4</span><p>BofA 7773 must reach exactly $0 before March 11, 2027. The 0% promo ends that day.</p></div>
     <div class="rc"><span class="ri">5</span><p>$1,000 to savings every single month throughout the full plan.</p></div>
     <div class="rc"><span class="ri">6</span><p>Zero cash advances from now on. ATM withdrawals on credit cards stop today.</p></div>
@@ -465,6 +494,12 @@ var BALANCES = {"Jul 2026": 55690.42, "Aug 2026": 53649.17, "Sep 2026": 51576.87
 var PERIODS = Object.keys(BALANCES);
 var TOTAL = 24;
 
+function setSoho(canceled) {
+  document.getElementById('btnSohoOn').classList.toggle('on', !canceled);
+  document.getElementById('btnSohoOff').classList.toggle('on', canceled);
+  document.getElementById('v5debt').textContent = canceled ? '$3,429.87' : '$3,104.09';
+  document.getElementById('v5fixed').textContent = canceled ? '$544.13' : '$869.91';
+}
 function showTab(el, id) {
   document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
   document.querySelectorAll('.pane').forEach(function(p){ p.classList.remove('active'); });
@@ -473,12 +508,10 @@ function showTab(el, id) {
 }
 
 function getState(cb) {
-  try {
-    window.storage.get('dor-v4').then(function(r){ cb(r ? JSON.parse(r.value) : {}); }).catch(function(){ cb({}); });
-  } catch(e) { cb({}); }
+  try { cb(JSON.parse(localStorage.getItem('dor-v4') || '{}')); } catch(e) { cb({}); }
 }
 function saveState(s) {
-  try { window.storage.set('dor-v4', JSON.stringify(s)); } catch(e) {}
+  try { localStorage.setItem('dor-v4', JSON.stringify(s)); } catch(e) {}
 }
 
 function updateUI(state) {
