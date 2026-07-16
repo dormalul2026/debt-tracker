@@ -117,9 +117,6 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-si
 .v5card{background:var(--bg2);border:1px solid var(--rule);border-radius:var(--r);padding:18px 22px;margin-bottom:20px;}
 .v5head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;}
 .v5head .label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--goldD);font-weight:600;}
-.soho-tog{display:flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden;}
-.soho-tog button{padding:6px 14px;font-size:12px;font-weight:600;border:none;background:transparent;color:var(--soft);cursor:pointer;transition:all .15s;}
-.soho-tog button.on{background:var(--goldD);color:#fff;}
 .v5grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
 .v5row{display:flex;flex-direction:column;gap:2px;}
 .v5row .vl{font-size:11px;color:var(--soft);}
@@ -156,15 +153,11 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-si
 <div class="v5card">
   <div class="v5head">
     <span class="label">Current plan — v5</span>
-    <div class="soho-tog">
-      <button class="on" id="btnSohoOn" onclick="setSoho(false)">Soho active</button>
-      <button id="btnSohoOff" onclick="setSoho(true)">Soho canceled Sep+</button>
-    </div>
   </div>
   <div class="v5grid">
     <div class="v5row"><span class="vl">Net income</span><span class="vv">$9,168</span></div>
     <div class="v5row red"><span class="vl">Rent</span><span class="vv">$2,850</span></div>
-    <div class="v5row"><span class="vl">Fixed expenses</span><span class="vv" id="v5fixed">$869.91</span></div>
+    <div class="v5row"><span class="vl">Fixed expenses</span><span class="vv" id="v5fixed">$469.57</span></div>
     <div class="v5row"><span class="vl">Variable living cap</span><span class="vv">$1,300</span></div>
     <div class="v5row"><span class="vl">Monthly savings</span><span class="vv">$1,000</span></div>
     <div class="v5row hl"><span class="vl">Debt payment</span><span class="vv" id="v5debt">$3,104.09</span></div>
@@ -370,14 +363,16 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-si
 <div class="pane" id="pane-budget">
   <div class="alloc-bar">
     <div class="seg" style="width:31.1%;background:var(--blu);">Rent</div>
-    <div class="seg" style="width:9.5%;background:#8E9DAE;">Fixed</div>
+    <div class="seg" style="width:5.1%;background:#8E9DAE;">Fixed</div>
+    <div class="seg" style="width:4.4%;background:#4A5361;">Buffer</div>
     <div class="seg" style="width:14.2%;background:#B7AE9C;">Living</div>
     <div class="seg" style="width:10.9%;background:var(--goldD);">Savings</div>
     <div class="seg" style="width:33.9%;background:var(--grn);">Debt</div>
   </div>
   <div class="al">
     <div class="it"><span class="sw" style="background:var(--blu)"></span>Rent <span class="am">$2,850</span></div>
-    <div class="it"><span class="sw" style="background:#8E9DAE"></span>Fixed expenses <span class="am">$870</span></div>
+    <div class="it"><span class="sw" style="background:#8E9DAE"></span>Fixed expenses <span class="am">$470</span></div>
+    <div class="it"><span class="sw" style="background:#4A5361"></span>Buffer / surplus <span class="am">$400</span></div>
     <div class="it"><span class="sw" style="background:#B7AE9C"></span>Variable living target <span class="am">$1,300</span></div>
     <div class="it"><span class="sw" style="background:var(--goldD)"></span>Savings <span class="am">$1,000</span></div>
     <div class="it"><span class="sw" style="background:var(--grn)"></span>Debt payment <span class="am">$3,104</span></div>
@@ -385,11 +380,10 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-si
   <div class="grid2">
     <div class="panel">
       <div class="ph"><i class="ti ti-repeat"></i>Fixed expenses</div>
-      <div class="psub">25 items incl. rent — sorted by cost — total $3,719.91</div>
+      <div class="psub">20 items incl. rent — sorted by cost — total $3,319.57</div>
       <table>
         <thead><tr><th style="text-align:left">Expense</th><th>Category</th><th>Amount</th></tr></thead>
         <tbody><tr style="outline:2px solid var(--gold);outline-offset:-2px;background:var(--goldBg);"><td style="border-radius:var(--r) 0 0 var(--r)"><span class="d t0"></span>Rent</td><td class="ec">Housing</td><td class="am" style="border-radius:0 var(--r) var(--r) 0">$2,850.00</td></tr>
-<tr><td><span class="d t1"></span>Soho House</td><td class="ec">Membership</td><td class="am">$325.78</td></tr>
 <tr><td><span class="d t1"></span>Haircut</td><td class="ec">Personal care</td><td class="am">$80.00</td></tr>
 <tr><td><span class="d t1"></span>Apple iPhone</td><td class="ec">Device</td><td class="am">$54.00</td></tr>
 <tr><td><span class="d t1"></span>T-Mobile</td><td class="ec">Phone</td><td class="am">$50.19</td></tr>
@@ -398,24 +392,19 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-si
 <tr><td><span class="d t2"></span>PureGym</td><td class="ec">Gym</td><td class="am">$34.48</td></tr>
 <tr><td><span class="d t2"></span>IsraTV</td><td class="ec">Media</td><td class="am">$30.00</td></tr>
 <tr><td><span class="d t2"></span>Laundry</td><td class="ec">Household</td><td class="am">$30.00</td></tr>
-<tr><td><span class="d t3"></span>ChatGPT Plus</td><td class="ec">AI</td><td class="am">$21.78</td></tr>
-<tr><td><span class="d t3"></span>Claude</td><td class="ec">AI</td><td class="am">$21.78</td></tr>
 <tr><td><span class="d t3"></span>Netflix</td><td class="ec">Streaming</td><td class="am">$21.76</td></tr>
 <tr><td><span class="d t3"></span>03 / Omni</td><td class="ec">Phone</td><td class="am">$16.90</td></tr>
-<tr><td><span class="d t3"></span>Chase bank fee</td><td class="ec">Bank fee - can waive</td><td class="am">$15.00</td></tr>
 <tr><td><span class="d t3"></span>Spotify</td><td class="ec">Music</td><td class="am">$12.99</td></tr>
-<tr><td><span class="d t3"></span>BofA bank fee</td><td class="ec">Bank fee - can waive</td><td class="am">$12.00</td></tr>
 <tr><td><span class="d t4"></span>Google Storage</td><td class="ec">Cloud</td><td class="am">$10.00</td></tr>
 <tr><td><span class="d t4"></span>Uber One</td><td class="ec">Membership</td><td class="am">$9.99</td></tr>
 <tr><td><span class="d t4"></span>NY Times</td><td class="ec">News</td><td class="am">$8.15</td></tr>
 <tr><td><span class="d t4"></span>Amazon Prime</td><td class="ec">Membership</td><td class="am">$8.15</td></tr>
-<tr><td><span class="d t4"></span>New York Magazine</td><td class="ec">News</td><td class="am">$8.00</td></tr>
+<tr><td><span class="d t4"></span>New York Magazine</td><td class="ec">News</td><td class="am">$4.00</td></tr>
 <tr><td><span class="d t4"></span>Audible</td><td class="ec">Books</td><td class="am">$7.49</td></tr>
 <tr><td><span class="d t4"></span>SoundCloud Go+</td><td class="ec">Music</td><td class="am">$5.99</td></tr>
 <tr><td><span class="d t4"></span>HBO Max</td><td class="ec">Streaming</td><td class="am">$5.49</td></tr>
-<tr class="tot-row"><td colspan="2">Total including rent</td><td class="am">$3,719.91</td></tr>        </tbody>
+<tr class="tot-row"><td colspan="2">Total including rent</td><td class="am">$3,319.57</td></tr>        </tbody>
       </table>
-      <p style="font-size:12px;color:var(--soft);margin-top:10px;">Chase and BofA bank fees ($27/mo total) can often be waived via direct deposit or minimum balance.</p>
     </div>
     <div class="panel">
       <div class="ph"><i class="ti ti-chart-bar"></i>Variable spend — actuals vs target</div>
@@ -489,12 +478,6 @@ var BALANCES = {"Jul 2026": 55690.42, "Aug 2026": 53649.17, "Sep 2026": 51576.87
 var PERIODS = Object.keys(BALANCES);
 var TOTAL = 24;
 
-function setSoho(canceled) {
-  document.getElementById('btnSohoOn').classList.toggle('on', !canceled);
-  document.getElementById('btnSohoOff').classList.toggle('on', canceled);
-  document.getElementById('v5debt').textContent = canceled ? '$3,429.87' : '$3,104.09';
-  document.getElementById('v5fixed').textContent = canceled ? '$544.13' : '$869.91';
-}
 function showTab(el, id) {
   document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
   document.querySelectorAll('.pane').forEach(function(p){ p.classList.remove('active'); });
