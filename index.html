@@ -98,6 +98,15 @@
   .edit-table tfoot td{border-bottom:none; border-top:1.5px solid var(--line); font-weight:700; color:var(--ink);}
   .addbtn{margin-top:12px; background:var(--card); color:var(--accent); border:1px solid var(--line); border-radius:10px; padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; transition:background .15s, color .15s, border-color .15s;}
   .addbtn:hover{background:var(--accent); color:#fff; border-color:var(--accent);}
+  .actlog{background:var(--card); border-radius:14px; padding:18px; box-shadow:0 1px 2px rgba(0,0,0,.04); margin-top:8px;}
+  .actmonthlab{font-weight:600; font-size:14px; display:inline-flex; align-items:center; gap:8px; margin-bottom:14px;}
+  .actlog select{font-family:inherit; font-size:14px; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink);}
+  .actinputs{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:14px;}
+  .actfield{display:flex; flex-direction:column; gap:4px;}
+  .actfield label{font-size:11.5px; color:var(--muted); font-weight:600;}
+  .actfield input{border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:14px; font-weight:600; text-align:right; background:var(--card); color:var(--ink); font-variant-numeric:tabular-nums; font-family:inherit;}
+  .actfield input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+  #actStatus{margin-left:12px; color:var(--accent);}
 
   .grandtotal{display:flex; justify-content:space-between; align-items:center; background:var(--ink); color:#fff; border-radius:14px; padding:16px 20px; margin-top:20px;}
   .grandtotal .lbl{color:rgba(255,255,255,.7); font-size:14px;}
@@ -168,6 +177,16 @@
   <tbody></tbody>
 </table>
 </div>
+
+<h2>My actual payments — log each month</h2>
+<p class="sub" style="margin-bottom:10px">Enter what you actually paid each card this month. The plan amounts are pre-filled — change only what's different, then Save. Your real balance, the progress bar, and the “Current balance” up top all update automatically.</p>
+<div class="actlog">
+  <label class="actmonthlab">Month <select id="actMonth"></select></label>
+  <div class="actinputs" id="actInputs"></div>
+  <button id="actSave" class="addbtn" type="button">Save this month</button>
+  <span id="actStatus" class="editnote"></span>
+</div>
+<div class="tablewrap" id="actHistory" style="margin-top:16px"></div>
 </section>
 
 <section class="panel" id="tab-budget" role="tabpanel">
@@ -508,6 +527,79 @@
     el.addEventListener('input', ()=>{ try{ localStorage.setItem('v91-curbal', el.value); }catch(e){} });
   }
 
+  // ---------- Actual payments log (you enter each month, it auto-updates) ----------
+  const ACT_CARDS = [
+    {n:"Amex 2000",   b:6038.49, apr:0.2999},
+    {n:"Chase 2520",  b:7624.14, apr:0.2724},
+    {n:"Chase 6019",  b:20253.70,apr:0.2449},
+    {n:"BofA 7773",   b:5737.71, apr:0.2449, promo:true},
+    {n:"BofA 1557",   b:9593.52, apr:0.2479},
+    {n:"BofA 5239",   b:951.64,  apr:0.2205},
+    {n:"BofA 2395",   b:7547.74, apr:0.2250}
+  ];
+  let actuals = { 0:[1000,400,900,57,292,26,215] }; // seeded with your actual August payments
+  function loadActuals(){ try{ const r=localStorage.getItem('v91-actuals'); if(r){ const p=JSON.parse(r); if(p && typeof p==='object') actuals=p; } }catch(e){} }
+  function saveActuals(){ try{ localStorage.setItem('v91-actuals', JSON.stringify(actuals)); }catch(e){} }
+  function actRate(c,m){ return (c.promo && m<7) ? 0 : c.apr; }
+  function computeActuals(){
+    const bal = ACT_CARDS.map(c=>c.b); const res=[];
+    for(let m=0;m<rows.length;m++){
+      if(!actuals[m]) break;                       // stop at first un-logged month
+      let paid=0;
+      for(let i=0;i<7;i++){
+        bal[i]+=bal[i]*actRate(ACT_CARDS[i],m)/12; // interest
+        const p=parseFloat(actuals[m][i])||0; bal[i]-=p; paid+=p;
+      }
+      res.push({m, paid, balance:bal.reduce((s,x)=>s+x,0), plan:rows[m][9]});
+    }
+    return res;
+  }
+  function fillActInputs(m){
+    const wrap=document.getElementById('actInputs'); wrap.innerHTML='';
+    const plan=rows[m].slice(1,8).map(x=>x===null?0:x);
+    const vals=actuals[m]||plan;
+    ACT_CARDS.forEach((c,i)=>{
+      const d=document.createElement('div'); d.className='actfield';
+      const lab=document.createElement('label'); lab.textContent=c.n;
+      const inp=document.createElement('input'); inp.type='number'; inp.step='0.01';
+      inp.value=(vals[i]!=null?vals[i]:0);
+      inp.setAttribute('aria-label','Actual paid to '+c.n);
+      d.appendChild(lab); d.appendChild(inp); wrap.appendChild(d);
+    });
+  }
+  function renderActHistory(){
+    const res=computeActuals();
+    const h=document.getElementById('actHistory');
+    if(!res.length){ h.innerHTML='<p class="sub" style="padding:4px 2px">No months logged yet — pick a month above, enter what you paid, and Save.</p>'; return; }
+    let html='<table><thead><tr><th style="text-align:left">Month</th><th style="text-align:right">You paid</th><th style="text-align:right">Real balance</th><th style="text-align:right">Plan said</th><th style="text-align:right">Vs plan</th></tr></thead><tbody>';
+    res.forEach(r=>{
+      const diff=r.balance-r.plan;
+      const vs = Math.abs(diff)<1 ? 'on track' : (diff>0 ? '$'+Math.round(diff).toLocaleString('en-US')+' behind' : '$'+Math.round(-diff).toLocaleString('en-US')+' ahead');
+      html+='<tr><td style="text-align:left">'+rows[r.m][0]+'</td><td style="text-align:right">'+fmt(r.paid)+'</td><td class="total" style="text-align:right">$'+Math.round(r.balance).toLocaleString('en-US')+'</td><td style="text-align:right">$'+r.plan.toLocaleString('en-US')+'</td><td style="text-align:right">'+vs+'</td></tr>';
+    });
+    html+='</tbody></table>';
+    h.innerHTML=html;
+    const last=res[res.length-1];
+    const cb=document.getElementById('curBal'); if(cb){ cb.value=Math.round(last.balance); try{ localStorage.setItem('v91-curbal',cb.value); }catch(e){} }
+    res.forEach(r=>{ checked[r.m]=true; }); saveState(); render();
+  }
+  function initActuals(){
+    loadActuals();
+    const sel=document.getElementById('actMonth');
+    rows.forEach((r,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=r[0]; sel.appendChild(o); });
+    let first=0; while(actuals[first]!==undefined && first<rows.length-1) first++;
+    sel.value=first; fillActInputs(first);
+    sel.addEventListener('change',()=>fillActInputs(parseInt(sel.value)));
+    document.getElementById('actSave').addEventListener('click',()=>{
+      const m=parseInt(sel.value);
+      actuals[m]=[...document.querySelectorAll('#actInputs input')].map(inp=>parseFloat(inp.value)||0);
+      saveActuals(); renderActHistory();
+      document.getElementById('actStatus').textContent='Saved '+rows[m][0]+' ✓';
+      if(m<rows.length-1){ sel.value=m+1; fillActInputs(m+1); }
+    });
+    renderActHistory();
+  }
+
   function initTabs(){
     const tabs = document.querySelectorAll('.tab');
     const panels = document.querySelectorAll('.panel');
@@ -529,6 +621,7 @@
   initMoney();
   initBalance();
   loadState();
+  initActuals();
 })();
 </script>
 </body>
