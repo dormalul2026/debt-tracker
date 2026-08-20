@@ -64,6 +64,9 @@
   td.total{font-weight:700; color:var(--ink);}
   tr.checked td{opacity:.4;}
   tr.checked td.month{opacity:.6;}
+  tr.actual td{background:var(--accent-soft);}
+  tr.actual td.attack{background:var(--attack-bg);}
+  tr.actual td.month{font-weight:700;}
   .tablewrap{overflow-x:auto; border-radius:14px;}
   input[type=checkbox]{width:17px; height:17px; accent-color:var(--accent); cursor:pointer;}
 
@@ -145,16 +148,16 @@
 
 <div class="stats">
   <div class="stat"><div class="n">$<input type="number" step="1" id="curBal" value="57747" aria-label="Current balance"></div><div class="l">Current balance · tap to edit</div></div>
-  <div class="stat"><div class="n">22</div><div class="l">Months to payoff (was 24)</div></div>
+  <div class="stat"><div class="n" id="statMonths">22</div><div class="l">Months to payoff</div></div>
   <div class="stat"><div class="n">$3,271</div><div class="l">Monthly debt payment</div></div>
-  <div class="stat"><div class="n">~$13,380</div><div class="l">Total interest (statement APRs)</div></div>
+  <div class="stat"><div class="n" id="statInterest">~$13,380</div><div class="l">Projected total interest</div></div>
   <div class="stat"><div class="n" id="monthsDone">0 / 22</div><div class="l">Months completed</div></div>
-  <div class="stat hot"><div class="n">May 2028</div><div class="l">Target: $0 debt</div></div>
+  <div class="stat hot"><div class="n" id="statTarget">May 2028</div><div class="l">Forecast: $0 debt</div></div>
 </div>
 
 <div class="runway">
   <div class="bar" id="runwayBar"></div>
-  <div class="cap"><span>Aug 2026</span><span>May 2028 · $0</span></div>
+  <div class="cap"><span>Aug 2026</span><span id="capEnd">May 2028 · $0</span></div>
 </div>
 
 <nav class="tabs" role="tablist" aria-label="Sections">
@@ -166,7 +169,7 @@
 
 <section class="panel active" id="tab-schedule" role="tabpanel">
 <h2>Payment schedule — starts August 1, 2026</h2>
-<p class="sub" style="margin-bottom:10px">Highlighted cell = your manual attack payment for the month. All other cards on autopay for the minimum shown. Check off each month once every payment has been made.</p>
+<p class="sub" style="margin-bottom:10px">Shaded rows are months you've logged — your <b>real payments and balance</b>. Un-shaded rows are a <b>live forecast</b>, recalculated from your real balance (highlighted cell = the attack payment). Log a month below and the whole forecast — including the finish date and total interest — updates automatically.</p>
 <div class="tablewrap">
 <table id="sched">
   <thead>
@@ -271,7 +274,7 @@
 
 <div class="foot">
   Debt Freedom Tracker · Dor · v9.1 · July 2026 · Attack order: Amex 2000 → Chase 2520 → Chase 6019 → BofA 1557 → BofA 7773 → BofA 2395 → BofA 5239<br>
-  May 2028 = $0 debt · $3,271+/month freed up for investing
+  $0 debt at the finish · then $3,271+/month freed up for investing
 </div>
 
 </div>
@@ -322,40 +325,54 @@
   }
 
   function render(){
+    const sched = buildSchedule();
+    const list = sched.list;
     tbody.innerHTML = "";
-    rows.forEach((r,i)=>{
+    let logged = 0;
+    list.forEach(item=>{
+      if(item.isActual) logged++;
       const tr = document.createElement("tr");
-      if(checked[i]) tr.className = "checked";
+      tr.className = item.isActual ? "actual" : (checked[item.m] ? "checked" : "");
       const tdc = document.createElement("td");
       const cb = document.createElement("input");
-      cb.type = "checkbox"; cb.checked = !!checked[i];
-      cb.setAttribute("aria-label","Mark "+r[0]+" as complete");
-      cb.addEventListener("change",()=>{ checked[i]=cb.checked; saveState(); render(); });
+      cb.type = "checkbox"; cb.checked = item.isActual || !!checked[item.m]; cb.disabled = item.isActual;
+      cb.setAttribute("aria-label","Mark "+item.label+" as complete");
+      cb.addEventListener("change",()=>{ checked[item.m]=cb.checked; saveState(); render(); });
       tdc.appendChild(cb); tr.appendChild(tdc);
-      const tdm = document.createElement("td"); tdm.className="month"; tdm.textContent=r[0]; tr.appendChild(tdm);
-      for(let c=1;c<=7;c++){
+      const tdm = document.createElement("td"); tdm.className="month"; tdm.textContent=item.label; tr.appendChild(tdm);
+      for(let c=0;c<7;c++){
         const td = document.createElement("td");
-        if(r[c]===null){ td.className="closed"; td.textContent="✓ paid off"; }
+        const v = item.pays[c];
+        if(!item.isActual && v===0){ td.className="closed"; td.textContent="✓ paid off"; }
         else{
-          td.textContent = fmt(r[c]);
-          if(r[c] > MIN[c-1] + 0.01) td.className = "attack";
+          td.textContent = fmt(v);
+          if(v > MIN[c] + 0.01) td.className = "attack";
         }
         tr.appendChild(td);
       }
-      const tdt = document.createElement("td"); tdt.className="total"; tdt.textContent=fmt(r[8]); tr.appendChild(tdt);
-      const tdb = document.createElement("td"); tdb.textContent="$"+r[9].toLocaleString("en-US"); tr.appendChild(tdb);
+      const total = item.pays.reduce((s,x)=>s+x,0);
+      const tdt = document.createElement("td"); tdt.className="total"; tdt.textContent=fmt(total); tr.appendChild(tdt);
+      const tdb = document.createElement("td"); tdb.textContent="$"+Math.round(item.bal).toLocaleString("en-US"); tr.appendChild(tdb);
       tbody.appendChild(tr);
     });
-    const done = checked.filter(Boolean).length;
-    document.getElementById("monthsDone").textContent = done + " / " + N;
+    const totalMonths = list.length;
+    const finish = totalMonths ? list[totalMonths-1].label.replace(/^\d+\.\s*/,'') : "—";
+    setTxt("monthsDone", logged + " / " + totalMonths);
+    setTxt("statMonths", String(totalMonths));
+    setTxt("statInterest", "~$" + Math.round(sched.interest).toLocaleString("en-US"));
+    setTxt("statTarget", finish);
+    setTxt("capEnd", finish + " · $0");
+    const lastActual = [...list].reverse().find(x=>x.isActual);
+    if(lastActual){ const cb=document.getElementById('curBal'); if(cb){ cb.value=Math.round(lastActual.bal); try{ localStorage.setItem('v91-curbal',cb.value); }catch(e){} } }
     const bar = document.getElementById("runwayBar");
     bar.innerHTML = "";
-    for(let i=0;i<N;i++){
+    for(let i=0;i<totalMonths;i++){
       const s = document.createElement("div");
-      s.className = "seg" + (checked[i] ? " done" : "");
-      s.title = rows[i][0];
+      s.className = "seg" + (i < logged ? " done" : "");
+      s.title = list[i].label;
       bar.appendChild(s);
     }
+    renderHistory(list);
   }
 
   // Lump-sum simulator: replicates the avalanche model
@@ -541,23 +558,33 @@
   function loadActuals(){ try{ const r=localStorage.getItem('v91-actuals'); if(r){ const p=JSON.parse(r); if(p && typeof p==='object') actuals=p; } }catch(e){} }
   function saveActuals(){ try{ localStorage.setItem('v91-actuals', JSON.stringify(actuals)); }catch(e){} }
   function actRate(c,m){ return (c.promo && m<7) ? 0 : c.apr; }
-  function computeActuals(){
-    const bal = ACT_CARDS.map(c=>c.b); const res=[];
-    for(let m=0;m<rows.length;m++){
-      if(!actuals[m]) break;                       // stop at first un-logged month
-      let paid=0;
-      for(let i=0;i<7;i++){
-        bal[i]+=bal[i]*actRate(ACT_CARDS[i],m)/12; // interest
-        const p=parseFloat(actuals[m][i])||0; bal[i]-=p; paid+=p;
-      }
-      res.push({m, paid, balance:bal.reduce((s,x)=>s+x,0), plan:rows[m][9]});
+  const ATTACK_ORDER = [0,1,2,4,3,6,5]; // display order: Amex, Chase 2520, Chase 6019, 1557, 7773, 2395, 5239
+  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  function monthLabel(m){ const idx=7+m, y=2026+Math.floor(idx/12), mo=idx%12; return (m+1)+". "+MONTHS[mo]+" "+y; }
+  function schedRate(i,m){ const c=ACT_CARDS[i]; return (c.promo && m<7) ? 0 : c.apr; }
+  // Builds the whole schedule: logged months (real) + a live avalanche forecast from the real balance.
+  function buildSchedule(){
+    const bal = ACT_CARDS.map(c=>c.b); const list=[]; let interest=0, m=0;
+    while(actuals[m]!==undefined && m<600){                       // real, logged months
+      const pays=[];
+      for(let i=0;i<7;i++){ const it=bal[i]*schedRate(i,m)/12; bal[i]+=it; interest+=it; const p=parseFloat(actuals[m][i])||0; bal[i]-=p; pays.push(p); }
+      list.push({m, label:monthLabel(m), pays, bal:bal.reduce((s,x)=>s+x,0), isActual:true});
+      m++;
     }
-    return res;
+    while(bal.some(b=>b>0.005) && m<600){                         // forecast, re-run avalanche
+      for(let i=0;i<7;i++){ const it=bal[i]*schedRate(i,m)/12; bal[i]+=it; interest+=it; }
+      let rem=BUDGET; const pays=new Array(7).fill(0);
+      for(let i=0;i<7;i++){ if(bal[i]>0.005){ const p=Math.min(MIN[i],bal[i]); pays[i]=p; bal[i]-=p; rem-=p; } }
+      for(const i of ATTACK_ORDER){ if(rem<=0.005) break; if(bal[i]>0.005){ const e=Math.min(rem,bal[i]); pays[i]+=e; bal[i]-=e; rem-=e; } }
+      list.push({m, label:monthLabel(m), pays, bal:bal.reduce((s,x)=>s+x,0), isActual:false});
+      m++;
+    }
+    return {list, interest};
   }
   function fillActInputs(m){
     const wrap=document.getElementById('actInputs'); wrap.innerHTML='';
-    const plan=rows[m].slice(1,8).map(x=>x===null?0:x);
-    const vals=actuals[m]||plan;
+    let vals=actuals[m];
+    if(!vals){ const it=buildSchedule().list.find(x=>x.m===m); vals = it ? it.pays.map(v=>Math.round(v*100)/100) : [0,0,0,0,0,0,0]; }
     ACT_CARDS.forEach((c,i)=>{
       const d=document.createElement('div'); d.className='actfield';
       const lab=document.createElement('label'); lab.textContent=c.n;
@@ -567,21 +594,20 @@
       d.appendChild(lab); d.appendChild(inp); wrap.appendChild(d);
     });
   }
-  function renderActHistory(){
-    const res=computeActuals();
-    const h=document.getElementById('actHistory');
-    if(!res.length){ h.innerHTML='<p class="sub" style="padding:4px 2px">No months logged yet — pick a month above, enter what you paid, and Save.</p>'; return; }
-    let html='<table><thead><tr><th style="text-align:left">Month</th><th style="text-align:right">You paid</th><th style="text-align:right">Real balance</th><th style="text-align:right">Plan said</th><th style="text-align:right">Vs plan</th></tr></thead><tbody>';
-    res.forEach(r=>{
-      const diff=r.balance-r.plan;
-      const vs = Math.abs(diff)<1 ? 'on track' : (diff>0 ? '$'+Math.round(diff).toLocaleString('en-US')+' behind' : '$'+Math.round(-diff).toLocaleString('en-US')+' ahead');
-      html+='<tr><td style="text-align:left">'+rows[r.m][0]+'</td><td style="text-align:right">'+fmt(r.paid)+'</td><td class="total" style="text-align:right">$'+Math.round(r.balance).toLocaleString('en-US')+'</td><td style="text-align:right">$'+r.plan.toLocaleString('en-US')+'</td><td style="text-align:right">'+vs+'</td></tr>';
+  function renderHistory(list){
+    const h=document.getElementById('actHistory'); if(!h) return;
+    const logged=list.filter(x=>x.isActual);
+    if(!logged.length){ h.innerHTML='<p class="sub" style="padding:4px 2px">No months logged yet — pick a month above, enter what you paid, and Save.</p>'; return; }
+    let html='<table><thead><tr><th style="text-align:left">Month</th><th style="text-align:right">You paid</th><th style="text-align:right">Real balance</th><th style="text-align:right">Original plan</th><th style="text-align:right">Vs plan</th></tr></thead><tbody>';
+    logged.forEach(item=>{
+      const paid=item.pays.reduce((s,x)=>s+x,0);
+      const planBal=(item.m<rows.length)?rows[item.m][9]:null;
+      let vs='—', planTxt='—';
+      if(planBal!==null){ planTxt='$'+planBal.toLocaleString('en-US'); const d=item.bal-planBal; vs = Math.abs(d)<1?'on track':(d>0?'$'+Math.round(d).toLocaleString('en-US')+' behind':'$'+Math.round(-d).toLocaleString('en-US')+' ahead'); }
+      html+='<tr><td style="text-align:left">'+item.label+'</td><td style="text-align:right">'+fmt(paid)+'</td><td class="total" style="text-align:right">$'+Math.round(item.bal).toLocaleString('en-US')+'</td><td style="text-align:right">'+planTxt+'</td><td style="text-align:right">'+vs+'</td></tr>';
     });
     html+='</tbody></table>';
     h.innerHTML=html;
-    const last=res[res.length-1];
-    const cb=document.getElementById('curBal'); if(cb){ cb.value=Math.round(last.balance); try{ localStorage.setItem('v91-curbal',cb.value); }catch(e){} }
-    res.forEach(r=>{ checked[r.m]=true; }); saveState(); render();
   }
   function initActuals(){
     loadActuals();
@@ -593,11 +619,11 @@
     document.getElementById('actSave').addEventListener('click',()=>{
       const m=parseInt(sel.value);
       actuals[m]=[...document.querySelectorAll('#actInputs input')].map(inp=>parseFloat(inp.value)||0);
-      saveActuals(); renderActHistory();
-      document.getElementById('actStatus').textContent='Saved '+rows[m][0]+' ✓';
+      saveActuals(); render();
+      document.getElementById('actStatus').textContent='Saved '+monthLabel(m)+' ✓';
       if(m<rows.length-1){ sel.value=m+1; fillActInputs(m+1); }
     });
-    renderActHistory();
+    render();
   }
 
   function initTabs(){
@@ -617,6 +643,7 @@
     show(saved);
   }
 
+  loadActuals();
   initTabs();
   initMoney();
   initBalance();
