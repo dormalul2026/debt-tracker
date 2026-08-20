@@ -90,7 +90,7 @@
   .lineitem input{width:120px; border:1px solid var(--line); border-radius:8px; padding:6px 10px; font-size:15px; font-weight:600; text-align:right; background:var(--card); color:var(--ink); font-variant-numeric:tabular-nums; font-family:inherit;}
   .lineitem input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
 
-  /* Editable tables (fixed + variable) */
+  /* Editable tables (fixed + variable + actuals) */
   .edit-table td{text-align:left; padding:6px 10px;}
   .edit-table input{border:1px solid transparent; border-radius:8px; padding:6px 8px; font-size:13px; font-family:inherit; background:transparent; color:var(--ink); width:100%; min-width:80px;}
   .edit-table input:hover{border-color:var(--line-soft);}
@@ -101,14 +101,6 @@
   .edit-table tfoot td{border-bottom:none; border-top:1.5px solid var(--line); font-weight:700; color:var(--ink);}
   .addbtn{margin-top:12px; background:var(--card); color:var(--accent); border:1px solid var(--line); border-radius:10px; padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; transition:background .15s, color .15s, border-color .15s;}
   .addbtn:hover{background:var(--accent); color:#fff; border-color:var(--accent);}
-  .actlog{background:var(--card); border-radius:14px; padding:18px; box-shadow:0 1px 2px rgba(0,0,0,.04); margin-top:8px;}
-  .actmonthlab{font-weight:600; font-size:14px; display:inline-flex; align-items:center; gap:8px; margin-bottom:14px;}
-  .actlog select{font-family:inherit; font-size:14px; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink);}
-  .actinputs{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:14px;}
-  .actfield{display:flex; flex-direction:column; gap:4px;}
-  .actfield label{font-size:11.5px; color:var(--muted); font-weight:600;}
-  .actfield input{border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:14px; font-weight:600; text-align:right; background:var(--card); color:var(--ink); font-variant-numeric:tabular-nums; font-family:inherit;}
-  .actfield input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
   #actStatus{margin-left:12px; color:var(--accent);}
 
   .grandtotal{display:flex; justify-content:space-between; align-items:center; background:var(--ink); color:#fff; border-radius:14px; padding:16px 20px; margin-top:20px;}
@@ -174,22 +166,25 @@
 <table id="sched">
   <thead>
     <tr>
-      <th>✓</th><th>Month</th><th>Amex 2000<br>29.99%</th><th>Chase 2520<br>27.24%</th><th>Chase 6019<br>24.49%</th><th>BofA 7773<br>0% to 3/2027, then 24.49%</th><th>BofA 1557<br>24.79% blended</th><th>BofA 5239<br>22.05% blended</th><th>BofA 2395<br>22.50% blended</th><th>Total</th><th>Balance after</th>
+      <th>✓</th><th>Month</th><th>Amex 2000<br>29.99%</th><th>Chase 2520<br>27.24%</th><th>Chase 6019<br>24.49%</th><th>BofA 7773<br>0% to 3/2027, then 24.49%</th><th>BofA 1557<br>24.79% blended</th><th>BofA 5239<br>22.05% blended</th><th>BofA 2395<br>22.50% blended</th><th>Paid this month</th><th>Paid to date</th><th>Balance after</th>
     </tr>
   </thead>
   <tbody></tbody>
 </table>
 </div>
 
-<h2>My actual payments — log each month</h2>
-<p class="sub" style="margin-bottom:10px">Enter what you actually paid each card this month. The plan amounts are pre-filled — change only what's different, then Save. Your real balance, the progress bar, and the “Current balance” up top all update automatically.</p>
-<div class="actlog">
-  <label class="actmonthlab">Month <select id="actMonth"></select></label>
-  <div class="actinputs" id="actInputs"></div>
-  <button id="actSave" class="addbtn" type="button">Save this month</button>
-  <span id="actStatus" class="editnote"></span>
+<h2>My actual payments — edit anytime</h2>
+<p class="sub" style="margin-bottom:10px">Type what you actually paid each card, in any logged month — change a number here and the schedule, forecast, finish date and totals above update instantly. “+ Log” adds the next month (pre-filled with the forecast; adjust freely).</p>
+<div class="tablewrap">
+<table id="actTable" class="edit-table">
+  <thead>
+    <tr><th style="text-align:left">Month</th><th style="text-align:right">Amex 2000</th><th style="text-align:right">Chase 2520</th><th style="text-align:right">Chase 6019</th><th style="text-align:right">BofA 7773</th><th style="text-align:right">BofA 1557</th><th style="text-align:right">BofA 5239</th><th style="text-align:right">BofA 2395</th><th style="text-align:right">Total paid</th><th style="width:36px"></th></tr>
+  </thead>
+  <tbody id="actBody"></tbody>
+</table>
 </div>
-<div class="tablewrap" id="actHistory" style="margin-top:16px"></div>
+<button id="actAdd" class="addbtn" type="button">+ Log next month</button>
+<span id="actStatus" class="editnote"></span>
 </section>
 
 <section class="panel" id="tab-budget" role="tabpanel">
@@ -328,7 +323,7 @@
     const sched = buildSchedule();
     const list = sched.list;
     tbody.innerHTML = "";
-    let logged = 0;
+    let logged = 0, cumulativePaid = 0;
     list.forEach(item=>{
       if(item.isActual) logged++;
       const tr = document.createElement("tr");
@@ -350,8 +345,9 @@
         }
         tr.appendChild(td);
       }
-      const total = item.pays.reduce((s,x)=>s+x,0);
+      const total = item.pays.reduce((s,x)=>s+x,0); cumulativePaid += total;
       const tdt = document.createElement("td"); tdt.className="total"; tdt.textContent=fmt(total); tr.appendChild(tdt);
+      const tdp = document.createElement("td"); tdp.textContent=fmt(cumulativePaid); tr.appendChild(tdp);
       const tdb = document.createElement("td"); tdb.textContent="$"+Math.round(item.bal).toLocaleString("en-US"); tr.appendChild(tdb);
       tbody.appendChild(tr);
     });
@@ -372,7 +368,6 @@
       s.title = list[i].label;
       bar.appendChild(s);
     }
-    renderHistory(list);
   }
 
   // Lump-sum simulator: replicates the avalanche model
@@ -544,7 +539,7 @@
     el.addEventListener('input', ()=>{ try{ localStorage.setItem('v91-curbal', el.value); }catch(e){} });
   }
 
-  // ---------- Actual payments log (you enter each month, it auto-updates) ----------
+  // ---------- Actual payments log (editable grid; drives the live forecast above) ----------
   const ACT_CARDS = [
     {n:"Amex 2000",   b:6038.49, apr:0.2999},
     {n:"Chase 2520",  b:7624.14, apr:0.2724},
@@ -557,7 +552,6 @@
   let actuals = { 0:[1000,400,900,57,292,26,215] }; // seeded with your actual August payments
   function loadActuals(){ try{ const r=localStorage.getItem('v91-actuals'); if(r){ const p=JSON.parse(r); if(p && typeof p==='object') actuals=p; } }catch(e){} }
   function saveActuals(){ try{ localStorage.setItem('v91-actuals', JSON.stringify(actuals)); }catch(e){} }
-  function actRate(c,m){ return (c.promo && m<7) ? 0 : c.apr; }
   const ATTACK_ORDER = [0,1,2,4,3,6,5]; // display order: Amex, Chase 2520, Chase 6019, 1557, 7773, 2395, 5239
   const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   function monthLabel(m){ const idx=7+m, y=2026+Math.floor(idx/12), mo=idx%12; return (m+1)+". "+MONTHS[mo]+" "+y; }
@@ -581,48 +575,51 @@
     }
     return {list, interest};
   }
-  function fillActInputs(m){
-    const wrap=document.getElementById('actInputs'); wrap.innerHTML='';
-    let vals=actuals[m];
-    if(!vals){ const it=buildSchedule().list.find(x=>x.m===m); vals = it ? it.pays.map(v=>Math.round(v*100)/100) : [0,0,0,0,0,0,0]; }
-    ACT_CARDS.forEach((c,i)=>{
-      const d=document.createElement('div'); d.className='actfield';
-      const lab=document.createElement('label'); lab.textContent=c.n;
-      const inp=document.createElement('input'); inp.type='number'; inp.step='0.01';
-      inp.value=(vals[i]!=null?vals[i]:0);
-      inp.setAttribute('aria-label','Actual paid to '+c.n);
-      d.appendChild(lab); d.appendChild(inp); wrap.appendChild(d);
+  function nextMonthIndex(){ let m=0; while(actuals[m]!==undefined && m<600) m++; return m; }
+  function renderActuals(){
+    const body=document.getElementById('actBody'); if(!body) return;
+    body.innerHTML='';
+    const logged=Object.keys(actuals).map(Number).sort((a,b)=>a-b);
+    const lastM = logged.length ? logged[logged.length-1] : -1;
+    logged.forEach(m=>{
+      if(!Array.isArray(actuals[m])) actuals[m]=[0,0,0,0,0,0,0];
+      const tr=document.createElement('tr');
+      const tdm=document.createElement('td'); tdm.style.textAlign='left'; tdm.style.fontWeight='600'; tdm.textContent=monthLabel(m); tr.appendChild(tdm);
+      const tdtot=document.createElement('td'); tdtot.className='total'; tdtot.style.textAlign='right';
+      const recompute=()=>{ tdtot.textContent=fmt(actuals[m].reduce((s,x)=>s+(parseFloat(x)||0),0)); };
+      for(let i=0;i<7;i++){
+        const td=document.createElement('td');
+        const inp=document.createElement('input'); inp.type='number'; inp.step='0.01'; inp.className='amt';
+        inp.value=(actuals[m][i]!=null?actuals[m][i]:0);
+        inp.setAttribute('aria-label',ACT_CARDS[i].n+' — '+monthLabel(m));
+        inp.addEventListener('input',()=>{ actuals[m][i]=parseFloat(inp.value)||0; saveActuals(); recompute(); render(); });
+        td.appendChild(inp); tr.appendChild(td);
+      }
+      recompute(); tr.appendChild(tdtot);
+      const tdd=document.createElement('td');
+      if(m===lastM){
+        const del=document.createElement('button'); del.className='del'; del.type='button'; del.textContent='×'; del.title='Remove this month';
+        del.setAttribute('aria-label','Remove '+monthLabel(m));
+        del.addEventListener('click',()=>{ delete actuals[m]; saveActuals(); renderActuals(); render(); });
+        tdd.appendChild(del);
+      }
+      tr.appendChild(tdd);
+      body.appendChild(tr);
     });
-  }
-  function renderHistory(list){
-    const h=document.getElementById('actHistory'); if(!h) return;
-    const logged=list.filter(x=>x.isActual);
-    if(!logged.length){ h.innerHTML='<p class="sub" style="padding:4px 2px">No months logged yet — pick a month above, enter what you paid, and Save.</p>'; return; }
-    let html='<table><thead><tr><th style="text-align:left">Month</th><th style="text-align:right">You paid</th><th style="text-align:right">Real balance</th><th style="text-align:right">Original plan</th><th style="text-align:right">Vs plan</th></tr></thead><tbody>';
-    logged.forEach(item=>{
-      const paid=item.pays.reduce((s,x)=>s+x,0);
-      const planBal=(item.m<rows.length)?rows[item.m][9]:null;
-      let vs='—', planTxt='—';
-      if(planBal!==null){ planTxt='$'+planBal.toLocaleString('en-US'); const d=item.bal-planBal; vs = Math.abs(d)<1?'on track':(d>0?'$'+Math.round(d).toLocaleString('en-US')+' behind':'$'+Math.round(-d).toLocaleString('en-US')+' ahead'); }
-      html+='<tr><td style="text-align:left">'+item.label+'</td><td style="text-align:right">'+fmt(paid)+'</td><td class="total" style="text-align:right">$'+Math.round(item.bal).toLocaleString('en-US')+'</td><td style="text-align:right">'+planTxt+'</td><td style="text-align:right">'+vs+'</td></tr>';
-    });
-    html+='</tbody></table>';
-    h.innerHTML=html;
+    const add=document.getElementById('actAdd'); const nx=nextMonthIndex();
+    if(add) add.textContent = nx<600 ? ('+ Log '+monthLabel(nx).replace(/^\d+\.\s*/,'')) : '+ Log next month';
   }
   function initActuals(){
     loadActuals();
-    const sel=document.getElementById('actMonth');
-    rows.forEach((r,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=r[0]; sel.appendChild(o); });
-    let first=0; while(actuals[first]!==undefined && first<rows.length-1) first++;
-    sel.value=first; fillActInputs(first);
-    sel.addEventListener('change',()=>fillActInputs(parseInt(sel.value)));
-    document.getElementById('actSave').addEventListener('click',()=>{
-      const m=parseInt(sel.value);
-      actuals[m]=[...document.querySelectorAll('#actInputs input')].map(inp=>parseFloat(inp.value)||0);
-      saveActuals(); render();
-      document.getElementById('actStatus').textContent='Saved '+monthLabel(m)+' ✓';
-      if(m<rows.length-1){ sel.value=m+1; fillActInputs(m+1); }
+    const add=document.getElementById('actAdd');
+    if(add) add.addEventListener('click',()=>{
+      const m=nextMonthIndex(); if(m>=600) return;
+      const it=buildSchedule().list.find(x=>x.m===m);
+      actuals[m] = it ? it.pays.map(v=>Math.round(v*100)/100) : [0,0,0,0,0,0,0];
+      saveActuals(); renderActuals(); render();
+      document.getElementById('actStatus').textContent='Added '+monthLabel(m).replace(/^\d+\.\s*/,'')+' — now edit the amounts above.';
     });
+    renderActuals();
     render();
   }
 
